@@ -1,0 +1,165 @@
+fileFormatVersion: 2
+guid: 1e9af25f0d6d3b04d82e0eaafaa9d8d5
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: monster
+    21300002: big tree
+    21300004: sprites_2
+    21300006: sprites_3
+    21300008: ray
+    21300010: sun
+    21300012: car
+    21300014: tree
+    21300016: gras
+    21300018: sky
+    21300020: flower
+    21300022: uhta
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 8
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: -1
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 5
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: monster
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 434
+        width: 454
+        height: 590
+      alignment: 9
+      pivot: {x: .480276734, y: .250896901}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: big tree
+      rect:
+        serializedVersion: 2
+        x: 491
+        y: 400
+        width: 559
+        height: 624
+      alignment: 7
+      pivot: {x: .5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sky
+      rect:
+        serializedVersion: 2
+        x: 2030
+        y: 415
+        width: 18
+        height: 603
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: gras
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 2045
+        height: 406
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: ray
+      rect:
+        serializedVersion: 2
+        x: 1348
+        y: 572
+        width: 122
+        height: 120
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sun
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 536
+        width: 211
+        height: 200
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: car
+      rect:
+        serializedVersion: 2
+        x: 998
+        y: 391
+        width: 407
+        height: 136
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: tree
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 734
+        width: 335
+        height: 289
+      alignment: 7
+      pivot: {x: .5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: flower
+      rect:
+        serializedVersion: 2
+        x: 1392
+        y: 607
+        width: 244
+        height: 417
+      alignment: 9
+      pivot: {x: .333192915, y: .0519074015}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: uhta
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 440
+        width: 546
+        height: 415
+      alignment: 7
+      pivot: {x: .5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

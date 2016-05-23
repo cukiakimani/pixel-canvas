@@ -1,0 +1,16 @@
+# Unity .gitignore file.
+.DS_Store
+.pfx.meta
+Library
+*.csproj
+*.sln
+*.userprefs
+Temp
+*.pidb
+_Build
+UnityVS
+Assets/Editor/OpenFileInBrowser.cs
+Assets/Editor/OpenFileInBrowser.cs.meta
+Assets/Editor/SublimeUnity.cs
+Assets/Editor/SublimeUnity.cs.meta
+gifs
