@@ -57,7 +57,7 @@ public class PixelCanvas : EditorWindow
         {
             Vector2 cursorOffset = Vector2.one * zoom * brushSize * 0.5f;
             Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
-            pos = SnapVector(pos, zoom * brushSize);
+            pos = SnapVector(pos, zoom);
             Vector2 size = Vector2.one * brushSize * zoom;
             EditorGUI.DrawRect(new Rect(pos, size), _penColor);
 
@@ -70,7 +70,16 @@ public class PixelCanvas : EditorWindow
                 // Color p = _drawTexture.GetPixel(x, y);
                 // p += _penColor;
 
-                _drawTexture.SetPixel(x, y, _penColor);
+                var cols = _drawTexture.GetPixels();
+                for (int i = x; i < x + brushSize; i++)
+                {
+                    for (int j = y; j > y - brushSize; j--)
+                    {
+                        cols[(int)canvasSize.y * j + i] = _penColor;
+                    }
+                }
+                _drawTexture.SetPixels(cols);
+
                 _drawTexture.Apply();
             }
         }
@@ -86,17 +95,23 @@ public class PixelCanvas : EditorWindow
     void DrawUI()
     {
         var colorChooserRect = new Rect(0, canvasSize.y * zoom, 80, 25);
-
         _penColor = EditorGUI.ColorField(colorChooserRect, "", _penColor);
 
-        var saveButtonRect = colorChooserRect;
-        saveButtonRect.y += 25;
-        if (GUI.Button(saveButtonRect, "Save"))
-        {
-            byte[] bytes = _drawTexture.EncodeToPNG();
-            string path = EditorUtility.SaveFilePanel("Save as PNG", Application.dataPath, "PixelCanvas_IMG.png", "");
-            File.WriteAllBytes(path, bytes);
-        }
+        var brushSizeRect = colorChooserRect;
+        brushSizeRect.y += colorChooserRect.height;
+        brushSize = Mathf.RoundToInt(GUI.HorizontalSlider(brushSizeRect, brushSize, 1f, 100f));
+
+        brushSizeRect.x += brushSizeRect.width;
+        GUI.Label(brushSizeRect, brushSize + "");
+
+        // var saveButtonRect = colorChooserRect;
+        // saveButtonRect.y += 25;
+        // if (GUI.Button(saveButtonRect, "Save"))
+        // {
+        //     byte[] bytes = _drawTexture.EncodeToPNG();
+        //     string path = EditorUtility.SaveFilePanel("Save as PNG", Application.dataPath, "PixelCanvas_IMG.png", "");
+        //     File.WriteAllBytes(path, bytes);
+        // }
     }
 
     public Vector3 SnapVector(Vector3 snapVector, float pixelSize)
