@@ -16,6 +16,8 @@ public class PixelCanvas : EditorWindow
     Rect canvasRect;
     Vector2 canvasSize = new Vector2(64, 64);
 
+    bool isErasing;
+
     // Add menu item named "Pixel Canvas" to the Window menu
     [MenuItem("Window/Pixel Canvas")]
     public static void ShowWindow()
@@ -59,23 +61,52 @@ public class PixelCanvas : EditorWindow
             Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
             pos = SnapVector(pos, zoom);
             Vector2 size = Vector2.one * brushSize * zoom;
-            EditorGUI.DrawRect(new Rect(pos, size), _penColor);
+
+            if (isErasing)
+            {
+                GUI.Box(new Rect(pos, size), "");
+            }
+            else
+            {
+                EditorGUI.DrawRect(new Rect(pos, size), _penColor);
+            }
 
             if (e.type == EventType.mouseDown || e.type == EventType.mouseDrag)
             {
                 _drawPos = new Vector2(pos.x / zoom, pos.y / zoom);
                 int x = (int)_drawPos.x;
                 int y = (int)canvasSize.y - 1 - (int)_drawPos.y;
-                
-                // Color p = _drawTexture.GetPixel(x, y);
-                // p += _penColor;
 
                 var cols = _drawTexture.GetPixels();
                 for (int i = x; i < x + brushSize; i++)
                 {
+                    if (i >= (int)canvasSize.x)
+                        continue;
+
                     for (int j = y; j > y - brushSize; j--)
                     {
-                        cols[(int)canvasSize.y * j + i] = _penColor;
+                        int index = (int)canvasSize.y * j + i;
+                        int arraySize = Mathf.RoundToInt(canvasSize.x * canvasSize.y);
+                        
+                        if (index >= arraySize || index < 0)
+                            continue;
+
+                        Color bg = cols[index];
+                        Color fg = _penColor;
+
+                        Color r = new Color();
+                        r.a = 1 - (1 - fg.a) * (1 - bg.a);
+                        if (r.a < 1.0e-6)
+                            continue; // Fully transparent -- R,G,B not important
+
+                        r.r = fg.r * fg.a / r.a + bg.r * bg.a * (1 - fg.a) / r.a;
+                        r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
+                        r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
+
+                        if (isErasing)
+                            cols[index] = Color.clear;
+                        else
+                            cols[index] = r;
                     }
                 }
                 _drawTexture.SetPixels(cols);
@@ -103,6 +134,11 @@ public class PixelCanvas : EditorWindow
 
         brushSizeRect.x += brushSizeRect.width;
         GUI.Label(brushSizeRect, brushSize + "");
+
+        brushSizeRect.x = 0;
+        brushSizeRect.width = 25;
+        brushSizeRect.y += brushSizeRect.height;
+        isErasing = GUI.Toggle(brushSizeRect, isErasing, "");
 
         // var saveButtonRect = colorChooserRect;
         // saveButtonRect.y += 25;
