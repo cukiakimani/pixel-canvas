@@ -103,14 +103,15 @@ public class PixelCanvas : EditorWindow
                         r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
                         r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
 
+
                         if (isErasing)
                             cols[index] = Color.clear;
                         else
                             cols[index] = r;
                     }
                 }
+                Undo.RecordObject(_drawTexture, "edit canvas");
                 _drawTexture.SetPixels(cols);
-
                 _drawTexture.Apply();
             }
         }
@@ -130,7 +131,7 @@ public class PixelCanvas : EditorWindow
 
         var brushSizeRect = colorChooserRect;
         brushSizeRect.y += colorChooserRect.height;
-        brushSize = Mathf.RoundToInt(GUI.HorizontalSlider(brushSizeRect, brushSize, 1f, 100f));
+        brushSize = Mathf.RoundToInt(GUI.HorizontalSlider(brushSizeRect, brushSize, 1f, 12f));
 
         brushSizeRect.x += brushSizeRect.width;
         GUI.Label(brushSizeRect, brushSize + "");
