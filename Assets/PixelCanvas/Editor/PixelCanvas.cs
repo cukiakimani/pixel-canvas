@@ -74,11 +74,16 @@ public class PixelCanvas : EditorWindow
             if (e.type == EventType.mouseDown || e.type == EventType.mouseDrag)
             {
                 _drawPos = new Vector2(pos.x / zoom, pos.y / zoom);
+                
+
                 int x = (int)_drawPos.x;
+                int brushPaintLen = x < 0 ? brushSize + x : brushSize + x;
+                x = x < 0 ? 0 : x;
                 int y = (int)canvasSize.y - 1 - (int)_drawPos.y;
+                
 
                 var cols = _drawTexture.GetPixels();
-                for (int i = x; i < x + brushSize; i++)
+                for (int i = x; i < brushPaintLen; i++)
                 {
                     if (i >= (int)canvasSize.x)
                         continue;
@@ -96,6 +101,7 @@ public class PixelCanvas : EditorWindow
 
                         Color r = new Color();
                         r.a = 1 - (1 - fg.a) * (1 - bg.a);
+                        
                         if (r.a < 1.0e-6)
                             continue; // Fully transparent -- R,G,B not important
 
@@ -103,11 +109,7 @@ public class PixelCanvas : EditorWindow
                         r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
                         r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
 
-
-                        if (isErasing)
-                            cols[index] = Color.clear;
-                        else
-                            cols[index] = r;
+                        cols[index] = isErasing ? Color.clear : r;
                     }
                 }
                 Undo.RecordObject(_drawTexture, "edit canvas");
