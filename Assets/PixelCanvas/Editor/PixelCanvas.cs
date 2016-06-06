@@ -10,11 +10,11 @@ public class PixelCanvas : EditorWindow
 
     Color _penColor = Color.black;
 
-    int zoom = 10;
+    float zoom = 10;
     int brushSize = 1;
 
     Rect canvasRect;
-    Vector2 canvasSize = new Vector2(64, 64);
+    Vector2 canvasSize = new Vector2(32, 32);
 
     bool isErasing;
 
@@ -29,16 +29,18 @@ public class PixelCanvas : EditorWindow
     void OnEnable()
     {
         _alphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
-        _drawTexture = new Texture2D(64, 64);
+        // _drawTexture = Resources.Load<Texture2D>("spr_JockeyOrcIdle_3");
+        _drawTexture = new Texture2D((int)canvasSize.x, (int)canvasSize.y);
         _drawTexture.filterMode = FilterMode.Point;
-        
+        canvasRect = new Rect(Vector2.zero, canvasSize * zoom);
+
         Color[] cols = _drawTexture.GetPixels();
         for (int i = 0; i < cols.Length; i++)
         {
             cols[i] = Color.clear;
         }
 
-        _drawTexture.SetPixels(0, 0, 64, 64, cols);
+        _drawTexture.SetPixels(0, 0, (int)canvasSize.x, (int)canvasSize.y, cols);
         _drawTexture.Apply();
     }
 
@@ -55,10 +57,23 @@ public class PixelCanvas : EditorWindow
     
         Event e = Event.current;
 
+        if (e.type == EventType.mouseDrag && e.button == 2)
+        {
+            canvasRect.position += e.delta;
+
+        }
+
+        if (e.type == EventType.scrollWheel)
+        {
+
+            zoom = Mathf.Clamp(zoom + -e.delta.y, 0.5f, 40f);
+        }
+
         if (canvasRect.Contains(e.mousePosition))
         {
             Vector2 cursorOffset = Vector2.one * zoom * brushSize * 0.5f;
             Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
+
             pos = SnapVector(pos, zoom);
             Vector2 size = Vector2.one * brushSize * zoom;
 
@@ -71,13 +86,14 @@ public class PixelCanvas : EditorWindow
                 EditorGUI.DrawRect(new Rect(pos, size), _penColor);
             }
 
-            if (e.type == EventType.mouseDown || e.type == EventType.mouseDrag)
+            if (e.button == 0 && (e.type == EventType.mouseDown || e.type == EventType.mouseDrag))
             {
+                pos -= canvasRect.position;
                 _drawPos = new Vector2(pos.x / zoom, pos.y / zoom);
                 
 
                 int x = (int)_drawPos.x;
-                int brushPaintLen = x < 0 ? brushSize + x : brushSize + x;
+                int brushPaintLen = brushSize + x;
                 x = x < 0 ? 0 : x;
                 int y = (int)canvasSize.y - 1 - (int)_drawPos.y;
                 
@@ -121,14 +137,14 @@ public class PixelCanvas : EditorWindow
 
     void DrawCanvas()
     {
-        canvasRect = new Rect(Vector2.zero, canvasSize * zoom);
+        canvasRect.size = canvasSize * zoom;
         GUI.DrawTextureWithTexCoords(canvasRect, _alphaTexture, new Rect(0, 0, canvasSize.x / 2, canvasSize.y / 2));
-        GUI.DrawTexture(canvasRect, _drawTexture, ScaleMode.ScaleToFit);
+        GUI.DrawTextureWithTexCoords(canvasRect, _drawTexture, new Rect(0, 0, 1, 1));
     }
 
     void DrawUI()
     {
-        var colorChooserRect = new Rect(0, canvasSize.y * zoom, 80, 25);
+        var colorChooserRect = new Rect(0, 640 + 50, 80, 25);
         _penColor = EditorGUI.ColorField(colorChooserRect, "", _penColor);
 
         var brushSizeRect = colorChooserRect;
@@ -142,6 +158,13 @@ public class PixelCanvas : EditorWindow
         brushSizeRect.width = 25;
         brushSizeRect.y += brushSizeRect.height;
         isErasing = GUI.Toggle(brushSizeRect, isErasing, "");
+
+        brushSizeRect.width = 80;
+        brushSizeRect.y += brushSizeRect.height;
+        if (GUI.Button(brushSizeRect, "" + zoom))
+        {
+            zoom = 10f;
+        }
 
         // var saveButtonRect = colorChooserRect;
         // saveButtonRect.y += 25;
