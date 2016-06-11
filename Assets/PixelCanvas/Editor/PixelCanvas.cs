@@ -64,6 +64,9 @@ public class PixelCanvas : EditorWindow
         CreateBlankCanvas();
         MenuOption = 3;
         Skin = Resources.Load<GUISkin>("PixelCanvasSkin");
+
+        ToolToggle = new bool[2];
+        ToolToggle[1] = true;
     }
 
     void Update()
@@ -128,6 +131,8 @@ public class PixelCanvas : EditorWindow
             CreateBlankCanvas();
             MenuOption = 3;
         }
+
+        ToolToggle[1] = true;
     }
 
     void CreateBlankCanvas()
@@ -167,6 +172,8 @@ public class PixelCanvas : EditorWindow
         {
             MenuOption = 0;
         }
+
+        ToolToggle[1] = true;
     }
 
     void PaintCanvas()
@@ -187,12 +194,19 @@ public class PixelCanvas : EditorWindow
             CanvasZoom = Mathf.Clamp(CanvasZoom + -e.delta.y, 0.5f, 40f);
         }
 
+        Cursor.visible = true;
+
         if (CanvasRect.Contains(e.mousePosition))
         {
+            Cursor.visible = false;
+
             Vector2 cursorOffset = Vector2.one * CanvasZoom * BrushSize * 0.5f;
             Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
 
-            pos = SnapVector(pos, CanvasZoom);
+            var cSnap = SnapVector(CanvasRect.position, CanvasZoom);
+            var delta = CanvasRect.position - cSnap;
+
+            pos = SnapVector(pos, CanvasZoom) + delta;
             Vector2 size = Vector2.one * BrushSize * CanvasZoom;
 
             if (ToolToggle[0])
@@ -203,7 +217,7 @@ public class PixelCanvas : EditorWindow
             {
                 EditorGUI.DrawRect(new Rect(pos, size), BrushColor);
             }
-
+            
             if (e.button == 0 && (e.type == EventType.mouseDown || e.type == EventType.mouseDrag))
             {
                 pos -= CanvasRect.position;
@@ -262,12 +276,7 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        Color col = Color.black;
-        ColorUtility.TryParseHtmlString("#383838FF", out col);
-
-        EditorGUI.DrawRect(new Rect(5, 10, 60, 300), col);
-
-        GUI.skin = Skin;
+        // GUI.skin = Skin;
 
         var rect = new Rect(10, 20, 50, 50);
         BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
@@ -276,17 +285,44 @@ public class PixelCanvas : EditorWindow
         rect.size = new Vector2(22, 22);
 
         // Pen 
-        ExclusiveGroupToggle(rect, 1, Skin.customStyles[1]);
+        ExclusiveGroupToggle(rect, 1, GUI.skin.toggle);
 
         // Eraser
         rect.x += 27;
-        ExclusiveGroupToggle(rect, 0, Skin.customStyles[2]);
+        ExclusiveGroupToggle(rect, 0, GUI.skin.toggle);
 
         rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
         BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, CanvasSize.x));
 
         rect.y += rect.height - 8;
-        EditorGUI.LabelField(rect, "" + BrushSize, Skin.customStyles[0]);
+        var style = GUI.skin.label;
+        style.alignment = TextAnchor.UpperRight;
+        EditorGUI.LabelField(rect, "" + BrushSize, style);
+
+        rect.y += rect.height + 5;
+        if (GUI.Button(rect, "" + CanvasZoom))
+        {
+            CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+            CanvasZoom = 10f;
+        }
+
+        rect.y += rect.height + 10;
+        rect.width = 300;
+        rect.height = 500;
+
+        Event e = Event.current;
+        Vector2 cursorOffset = Vector2.one * CanvasZoom * BrushSize * 0.5f;
+        Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
+        // pos = SnapVector(pos, CanvasZoom);
+
+        var cSnap = SnapVector(CanvasRect.position, CanvasZoom);
+        var delta = CanvasRect.position - cSnap;
+
+        EditorGUI.LabelField(rect, "CanvasRect.position: " + CanvasRect.position
+            + "\nSnap CanvasRec.position" + cSnap
+            + "\nDelta: " + delta
+            + "\nMouseSnap Pos: " + SnapVector(pos, CanvasZoom)
+            + "\nMousePos: " + pos);
 
         // brushSizeRect.x += brushSizeRect.width;
         // GUI.Label(brushSizeRect, BrushSize + "");
@@ -328,17 +364,17 @@ public class PixelCanvas : EditorWindow
         }
     }
 
-    Vector3 SnapVector(Vector3 snapVector, float pixelSize)
+    Vector2 SnapVector(Vector3 snapVector, float pixelSize)
     {
-        var x1 = Mathf.Floor(snapVector.x / pixelSize) * pixelSize;
-        var x2 = Mathf.Ceil(snapVector.x / pixelSize) * pixelSize;
+        var x1 = Mathf.FloorToInt(snapVector.x / pixelSize) * pixelSize;
+        var x2 = Mathf.CeilToInt(snapVector.x / pixelSize) * pixelSize;
 
-        var y1 = Mathf.Ceil(snapVector.y / pixelSize) * pixelSize;
-        var y2 = Mathf.Floor(snapVector.y / pixelSize) * pixelSize;
+        var y1 = Mathf.FloorToInt(snapVector.y / pixelSize) * pixelSize;
+        var y2 = Mathf.CeilToInt(snapVector.y / pixelSize) * pixelSize;
 
         var x = Mathf.Abs(snapVector.x - x1) < Mathf.Abs(snapVector.x - x2) ? x1 : x2;
         var y = Mathf.Abs(snapVector.y - y1) < Mathf.Abs(snapVector.y - y2) ? y1 : y2;
 
-        return new Vector3(x, y, snapVector.z);
+        return new Vector2(x, y);
     }
 }
