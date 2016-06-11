@@ -262,7 +262,10 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        // EditorGUI.DrawRect(rect, Color.yellow);
+        Color col = Color.black;
+        ColorUtility.TryParseHtmlString("#383838FF", out col);
+
+        EditorGUI.DrawRect(new Rect(5, 10, 60, 300), col);
 
         GUI.skin = Skin;
 
@@ -273,11 +276,11 @@ public class PixelCanvas : EditorWindow
         rect.size = new Vector2(22, 22);
 
         // Pen 
-        ExclusiveGroupToggle(rect, 1);
+        ExclusiveGroupToggle(rect, 1, Skin.customStyles[1]);
 
         // Eraser
         rect.x += 27;
-        ExclusiveGroupToggle(rect, 0);
+        ExclusiveGroupToggle(rect, 0, Skin.customStyles[2]);
 
         rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
         BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, CanvasSize.x));
@@ -304,13 +307,13 @@ public class PixelCanvas : EditorWindow
         // EditorGUI.LabelField(brushSizeRect, MenuOption + "");
     }
 
-    void ExclusiveGroupToggle(Rect r, int index)
+    void ExclusiveGroupToggle(Rect r, int index, GUIStyle style)
     {
-        bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(""));
+        bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(""), style);
 
         if (!ToolToggle[index] && delta)
             ToolToggle[index] = delta;
-        
+
         if (ToolToggle[index])
             ToolToggleExclusivity(index);
     }
