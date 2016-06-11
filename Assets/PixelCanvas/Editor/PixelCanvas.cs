@@ -5,6 +5,7 @@ using System.IO;
 public class PixelCanvas : EditorWindow
 {
     public int MenuOption;
+    public GUISkin Skin;
 
     public static Texture2D DrawTexture;
     public Texture2D AlphaTexture;
@@ -20,39 +21,25 @@ public class PixelCanvas : EditorWindow
 
     public Vector2 CanvasSize;
 
-    public bool IsErasing;
+    // 0 - Eraser
+    // 1 - Pen
+    public bool[] ToolToggle = new bool[2];
 
-    // // Add menu item named "Pixel Canvas" to the Window menu
     [MenuItem("Pixel Canvas/New Canvas")]
     public static void ShowWindow()
     {
-        //Show existing window instance. If one doesn't exist, make one.
-        var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas));
-
-        // _instance.CanvasSize = new Vector2(32, 32);
-        // _instance.CreateNewCanvas();
-
-        // canvas._drawTexture = null;
+        var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas), false, "Pixel Canvas");
         canvas.MenuOption = 1;
         canvas.Show();
-        
-        Debug.Log("NewCanvasShowWindow");
-        // EditorWindow.GetWindow(typeof(PixelCanvas));
     }
 
     [MenuItem("Pixel Canvas/Edit Sprite")]
     public static void EditSpriteShowWindow()
     {
-        //Show existing window instance. If one doesn't exist, make one.
-        var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas));
-
-        // canvas._drawTexture = null;
+        var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas), false, "Pixel Canvas");
         canvas.MenuOption = 0;
         canvas.Show();
-
         canvas.OpenSpriteCanvas();
-
-        Debug.Log("EditSpriteShowWindow");
     }
 
     [MenuItem("Pixel Canvas/Save Sprite")]
@@ -71,8 +58,12 @@ public class PixelCanvas : EditorWindow
 
     void OnEnable()
     {
-        MenuOption = 0;
+        // MenuOption = 0;
         CanvasSize = Vector2.one * 32;
+
+        CreateBlankCanvas();
+        MenuOption = 3;
+        Skin = Resources.Load<GUISkin>("PixelCanvasSkin");
     }
 
     void Update()
@@ -82,7 +73,6 @@ public class PixelCanvas : EditorWindow
 
     void OnGUI()
     {
-
         switch (MenuOption)
         {
             case 0:
@@ -103,7 +93,82 @@ public class PixelCanvas : EditorWindow
                 break;
         }
     }
+
+    void NewWindowGUI()
+    {
+        var rect = new Rect(0, 0, 100, 20);
+        EditorGUI.DrawRect(rect, Color.gray);
+
+        GUI.Label(rect, "Pixel Canvas!");
+
+        rect.y += rect.height;
+        if (GUI.Button(rect, "Blank Canvas"))
+        {
+            MenuOption = 1;
+        }
+
+        rect.y += rect.height;
+        if (GUI.Button(rect, "Edit Sprite"))
+        {
+            MenuOption = 2;
+        }
+    }
+
+    void ChooseSizeCanvasGUI()
+    {
+        Rect r = new Rect(5, 5, 200, 25);
+        CanvasSize.x = Mathf.Clamp(EditorGUI.IntField(r, "Width", (int)CanvasSize.x), 0f, Mathf.Infinity);
+
+        r = new Rect(5, 35, 200, 25);
+        CanvasSize.y = Mathf.Clamp(EditorGUI.IntField(r, "Height", (int)CanvasSize.y), 0f, Mathf.Infinity);
+
+        r = new Rect(5, 65, 100, 25);
+        if (GUI.Button(r, "Create Canvas"))
+        {
+            CreateBlankCanvas();
+            MenuOption = 3;
+        }
+    }
+
+    void CreateBlankCanvas()
+    {
+        AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
+        DrawTexture = new Texture2D((int)CanvasSize.x, (int)CanvasSize.y);
+        DrawTexture.filterMode = FilterMode.Point;
+        CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+
+        Color[] cols = DrawTexture.GetPixels();
+        for (int i = 0; i < cols.Length; i++)
+        {
+            cols[i] = Color.clear;
+        }
+
+        DrawTexture.SetPixels(0, 0, (int)CanvasSize.x, (int)CanvasSize.y, cols);
+        DrawTexture.Apply();
+    }
     
+    void OpenSpriteCanvas()
+    {
+        string path = EditorUtility.OpenFilePanel("Select Sprite", Application.dataPath, "png");
+
+        if (path != "")
+        {
+            AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
+            var bytes = File.ReadAllBytes(path);
+            DrawTexture = new Texture2D(1, 1);
+            DrawTexture.LoadImage(bytes);
+            CanvasSize = new Vector2(DrawTexture.width, DrawTexture.height);
+            DrawTexture.filterMode = FilterMode.Point;
+            CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+
+            MenuOption = 3;
+        }
+        else
+        {
+            MenuOption = 0;
+        }
+    }
+
     void PaintCanvas()
     {
         DrawCanvas();
@@ -130,7 +195,7 @@ public class PixelCanvas : EditorWindow
             pos = SnapVector(pos, CanvasZoom);
             Vector2 size = Vector2.one * BrushSize * CanvasZoom;
 
-            if (IsErasing)
+            if (ToolToggle[0])
             {
                 GUI.Box(new Rect(pos, size), "");
             }
@@ -178,84 +243,13 @@ public class PixelCanvas : EditorWindow
                         r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
                         r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
 
-                        cols[index] = IsErasing ? Color.clear : r;
+                        cols[index] = ToolToggle[0] ? Color.clear : r;
                     }
                 }
                 Undo.RecordObject(DrawTexture, "edit canvas");
                 DrawTexture.SetPixels(cols);
                 DrawTexture.Apply();
             }
-        }
-    }
-
-    void NewWindowGUI()
-    {
-        var rect = new Rect(0, 0, 100, 20);
-        EditorGUI.DrawRect(rect, Color.gray);
-
-        GUI.Label(rect, "Pixel Canvas!");
-
-        rect.y += rect.height;
-        if (GUI.Button(rect, "Blank Canvas"))
-        {
-            MenuOption = 1;
-        }
-
-        rect.y += rect.height;
-        if (GUI.Button(rect, "Edit Sprite"))
-        {
-            MenuOption = 2;
-        }
-    }
-
-    void ChooseSizeCanvasGUI()
-    {
-        Rect r = new Rect(5, 5, 200, 25);
-        CanvasSize.x = Mathf.Clamp(EditorGUI.IntField(r, "Width", (int)CanvasSize.x), 0f, Mathf.Infinity);
-
-        r = new Rect(5, 35, 200, 25);
-        CanvasSize.y = Mathf.Clamp(EditorGUI.IntField(r, "Height", (int)CanvasSize.y), 0f, Mathf.Infinity);
-
-        r = new Rect(5, 65, 100, 25);
-        if (GUI.Button(r, "Create Canvas"))
-        {
-            AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
-            DrawTexture = new Texture2D((int)CanvasSize.x, (int)CanvasSize.y);
-            DrawTexture.filterMode = FilterMode.Point;
-            CanvasRect = new Rect(Vector2.zero, CanvasSize * CanvasZoom);
-
-            Color[] cols = DrawTexture.GetPixels();
-            for (int i = 0; i < cols.Length; i++)
-            {
-                cols[i] = Color.clear;
-            }
-
-            DrawTexture.SetPixels(0, 0, (int)CanvasSize.x, (int)CanvasSize.y, cols);
-            DrawTexture.Apply();
-
-            MenuOption = 3;
-        }
-    }
-    
-    void OpenSpriteCanvas()
-    {
-        string path = EditorUtility.OpenFilePanel("Select Sprite", Application.dataPath, "png");
-
-        if (path != "")
-        {
-            AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
-            var bytes = File.ReadAllBytes(path);
-            DrawTexture = new Texture2D(1, 1);
-            DrawTexture.LoadImage(bytes);
-            CanvasSize = new Vector2(DrawTexture.width, DrawTexture.height);
-            DrawTexture.filterMode = FilterMode.Point;
-            CanvasRect = new Rect(Vector2.zero, CanvasSize * CanvasZoom);
-
-            MenuOption = 3;
-        }
-        else
-        {
-            MenuOption = 0;
         }
     }
 
@@ -268,30 +262,61 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        var colorChooserRect = new Rect(0, 640 + 50, 80, 25);
-        BrushColor = EditorGUI.ColorField(colorChooserRect, "", BrushColor);
+        // EditorGUI.DrawRect(rect, Color.yellow);
 
-        var brushSizeRect = colorChooserRect;
-        brushSizeRect.y += colorChooserRect.height;
-        BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(brushSizeRect, BrushSize, 1f, 12f));
+        GUI.skin = Skin;
 
-        brushSizeRect.x += brushSizeRect.width;
-        GUI.Label(brushSizeRect, BrushSize + "");
+        var rect = new Rect(10, 20, 50, 50);
+        BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
 
-        brushSizeRect.x = 0;
-        brushSizeRect.width = 25;
-        brushSizeRect.y += brushSizeRect.height;
-        IsErasing = GUI.Toggle(brushSizeRect, IsErasing, "");
+        rect.y += rect.height + 5;
+        rect.size = new Vector2(22, 22);
 
-        brushSizeRect.width = 80;
-        brushSizeRect.y += brushSizeRect.height;
-        if (GUI.Button(brushSizeRect, "" + CanvasZoom))
+        // Pen 
+        ExclusiveGroupToggle(rect, 1);
+
+        // Eraser
+        rect.x += 27;
+        ExclusiveGroupToggle(rect, 0);
+
+        rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
+        BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, 12f));
+
+        // brushSizeRect.x += brushSizeRect.width;
+        // GUI.Label(brushSizeRect, BrushSize + "");
+
+        // brushSizeRect.x = 0;
+        // brushSizeRect.width = 25;
+        // brushSizeRect.y += brushSizeRect.height;
+        // IsErasing = GUI.Toggle(brushSizeRect, IsErasing, "");
+
+        // brushSizeRect.width = 80;
+        // brushSizeRect.y += brushSizeRect.height;
+        // if (GUI.Button(brushSizeRect, "" + CanvasZoom))
+        // {
+        //     CanvasZoom = 10f;
+        // }
+
+        // brushSizeRect.y += brushSizeRect.height;
+        // EditorGUI.LabelField(brushSizeRect, MenuOption + "");
+    }
+
+    void ExclusiveGroupToggle(Rect r, int index)
+    {
+        ToolToggle[index] = GUI.Toggle(r, ToolToggle[index], new GUIContent(""));
+
+        if (ToolToggle[index])
+            ToolToggleExclusivity(index);
+    }
+
+
+    void ToolToggleExclusivity(int trueIndex)
+    {
+        for (int i = 0; i < ToolToggle.Length; i++)
         {
-            CanvasZoom = 10f;
+            if (i != trueIndex)
+                ToolToggle[i] = false;
         }
-
-        brushSizeRect.y += brushSizeRect.height;
-        EditorGUI.LabelField(brushSizeRect, MenuOption + "");
     }
 
     Vector3 SnapVector(Vector3 snapVector, float pixelSize)
