@@ -280,7 +280,10 @@ public class PixelCanvas : EditorWindow
         ExclusiveGroupToggle(rect, 0);
 
         rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
-        BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, 12f));
+        BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, CanvasSize.x));
+
+        rect.y += rect.height - 8;
+        EditorGUI.LabelField(rect, "" + BrushSize, Skin.customStyles[0]);
 
         // brushSizeRect.x += brushSizeRect.width;
         // GUI.Label(brushSizeRect, BrushSize + "");
@@ -303,8 +306,11 @@ public class PixelCanvas : EditorWindow
 
     void ExclusiveGroupToggle(Rect r, int index)
     {
-        ToolToggle[index] = GUI.Toggle(r, ToolToggle[index], new GUIContent(""));
+        bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(""));
 
+        if (!ToolToggle[index] && delta)
+            ToolToggle[index] = delta;
+        
         if (ToolToggle[index])
             ToolToggleExclusivity(index);
     }
