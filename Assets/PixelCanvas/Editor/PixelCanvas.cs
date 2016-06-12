@@ -206,8 +206,6 @@ public class PixelCanvas : EditorWindow
             CanvasZoom = Mathf.Clamp(CanvasZoom + -e.delta.y, 0.5f, 40f);
         }
 
-        
-
         Cursor.visible = true;
 
         if (CanvasRect.Contains(e.mousePosition))
@@ -237,40 +235,57 @@ public class PixelCanvas : EditorWindow
                 pos -= CanvasRect.position;
                 DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
 
-                int x = (int)DrawPosition.x;
-                int brushPaintLen = BrushSize + x;
-                x = x < 0 ? 0 : x;
-                int y = (int)CanvasSize.y - 1 - (int)DrawPosition.y;
+                PaintPixelBrushSize(DrawPosition);
+               
+                
 
-                var cols = DrawTexture.GetPixels();
-                for (int i = x; i < brushPaintLen; i++)
+                Vector2 dir = (DrawPosition - _lastDrawPos);
+                _debugString = "Last Draw Pos: " + _lastDrawPos
+                + "\nCurr Draw Pos: " + DrawPosition
+                + "\nDistance: " + dir.magnitude
+                + "\nDirection: " + dir;
+
+                if (_lastDrawPos.x > 0 && _lastDrawPos.y > 0)
                 {
-                    if (i >= (int)CanvasSize.x)
-                        continue;
-
-                    for (int j = y; j > y - BrushSize; j--)
+                    for (int d = 1; d < dir.magnitude; d++)
                     {
-                        var v = new Vector2(x, y);
-                        var dir = (_lastDrawPos - DrawPosition);
-
-                        _debugString = "Last Draw Pos: " + _lastDrawPos
-                        + "\nCurr Draw Pos: " + DrawPosition
-                        + "\nDistance: " + dir.magnitude
-                        + "\nDirection: " + dir;
-
-                        PaintPixel(cols, new Vector2(i, j));
-
-                        
+                        var p = _lastDrawPos + dir.normalized * d;
+                        PaintPixelBrushSize(p);
                     }
                 }
 
                 _lastDrawPos = DrawPosition;
-
-                Undo.RecordObject(DrawTexture, "edit canvas");
-                DrawTexture.SetPixels(cols);
-                DrawTexture.Apply();
             }
         }
+
+        if (e.button == 0 && e.type == EventType.mouseUp)
+        {
+            _lastDrawPos = Vector2.one * -1;
+        }
+    }
+
+    void PaintPixelBrushSize(Vector2 pos)
+    {
+        int x = (int)pos.x;
+        int brushPaintLen = BrushSize + x;
+        x = x < 0 ? 0 : x;
+        int y = (int)CanvasSize.y - 1 - (int)pos.y;
+
+        var cols = DrawTexture.GetPixels();
+        for (int i = x; i < brushPaintLen; i++)
+        {
+            if (i >= (int)CanvasSize.x)
+                continue;
+
+            for (int j = y; j > y - BrushSize; j--)
+            {
+                PaintPixel(cols, new Vector2(i, j));
+            }
+        }
+
+        Undo.RecordObject(DrawTexture, "edit canvas");
+        DrawTexture.SetPixels(cols);
+        DrawTexture.Apply();
     }
 
     void PaintPixel(Color[] pixels, Vector2 paintPos)
@@ -353,6 +368,7 @@ public class PixelCanvas : EditorWindow
     {
         _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
         _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
+        _lastDrawPos = new Vector2(-1, -1);
     }
 
     void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
