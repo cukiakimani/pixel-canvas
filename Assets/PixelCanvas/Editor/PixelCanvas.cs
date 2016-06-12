@@ -25,6 +25,8 @@ public class PixelCanvas : EditorWindow
     // 1 - Pen
     public bool[] ToolToggle = new bool[2];
 
+    string _debugString;
+
     [MenuItem("Pixel Canvas/New Canvas")]
     public static void ShowWindow()
     {
@@ -59,7 +61,7 @@ public class PixelCanvas : EditorWindow
     void OnEnable()
     {
         // MenuOption = 0;
-        CanvasSize = Vector2.one * 32;
+        CanvasSize = new Vector2(5, 10);
 
         CreateBlankCanvas();
         MenuOption = 3;
@@ -148,6 +150,18 @@ public class PixelCanvas : EditorWindow
             cols[i] = Color.clear;
         }
 
+        // Debug.Log("hello");
+
+        // for (int x = 0; x < (int)CanvasSize.x; x++)
+        // {
+        //     for (int y = 0; y < (int)CanvasSize.y; y++)
+        //     {
+        //         int index = (int)CanvasSize.y * y + x;
+        //         var v = new Vector2(x, y);
+        //         Debug.Log(index + " : " + v);
+        //     }
+        // }
+
         DrawTexture.SetPixels(0, 0, (int)CanvasSize.x, (int)CanvasSize.y, cols);
         DrawTexture.Apply();
     }
@@ -222,13 +236,12 @@ public class PixelCanvas : EditorWindow
             {
                 pos -= CanvasRect.position;
                 DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
-                
+                // Debug.Log(DrawPosition);
 
                 int x = (int)DrawPosition.x;
                 int brushPaintLen = BrushSize + x;
                 x = x < 0 ? 0 : x;
                 int y = (int)CanvasSize.y - 1 - (int)DrawPosition.y;
-                
 
                 var cols = DrawTexture.GetPixels();
                 for (int i = x; i < brushPaintLen; i++)
@@ -238,9 +251,12 @@ public class PixelCanvas : EditorWindow
 
                     for (int j = y; j > y - BrushSize; j--)
                     {
-                        int index = (int)CanvasSize.y * j + i;
+                        int index = (int)CanvasSize.x * j + i;
                         int arraySize = Mathf.RoundToInt(CanvasSize.x * CanvasSize.y);
                         
+                        var v = new Vector2(x, y);
+                        _debugString = "" + v + " : " + index;
+
                         if (index >= arraySize || index < 0)
                             continue;
 
@@ -310,19 +326,7 @@ public class PixelCanvas : EditorWindow
         rect.width = 300;
         rect.height = 500;
 
-        Event e = Event.current;
-        Vector2 cursorOffset = Vector2.one * CanvasZoom * BrushSize * 0.5f;
-        Vector2 pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
-        // pos = SnapVector(pos, CanvasZoom);
-
-        var cSnap = SnapVector(CanvasRect.position, CanvasZoom);
-        var delta = CanvasRect.position - cSnap;
-
-        EditorGUI.LabelField(rect, "CanvasRect.position: " + CanvasRect.position
-            + "\nSnap CanvasRec.position" + cSnap
-            + "\nDelta: " + delta
-            + "\nMouseSnap Pos: " + SnapVector(pos, CanvasZoom)
-            + "\nMousePos: " + pos);
+        EditorGUI.LabelField(rect, _debugString);
 
         // brushSizeRect.x += brushSizeRect.width;
         // GUI.Label(brushSizeRect, BrushSize + "");
