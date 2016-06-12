@@ -186,6 +186,8 @@ public class PixelCanvas : EditorWindow
         ToolToggle[1] = true;
     }
 
+    Vector2 _lastDrawPos;
+
     void PaintCanvas()
     {
         DrawCanvas();
@@ -203,6 +205,8 @@ public class PixelCanvas : EditorWindow
         {
             CanvasZoom = Mathf.Clamp(CanvasZoom + -e.delta.y, 0.5f, 40f);
         }
+
+        
 
         Cursor.visible = true;
 
@@ -232,7 +236,6 @@ public class PixelCanvas : EditorWindow
             {
                 pos -= CanvasRect.position;
                 DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
-                // Debug.Log(DrawPosition);
 
                 int x = (int)DrawPosition.x;
                 int brushPaintLen = BrushSize + x;
@@ -247,36 +250,58 @@ public class PixelCanvas : EditorWindow
 
                     for (int j = y; j > y - BrushSize; j--)
                     {
-                        int index = (int)CanvasSize.x * j + i;
-                        int arraySize = Mathf.RoundToInt(CanvasSize.x * CanvasSize.y);
-                        
                         var v = new Vector2(x, y);
-                        _debugString = "" + v + " : " + index;
+                        var dir = (_lastDrawPos - DrawPosition);
 
-                        if (index >= arraySize || index < 0)
-                            continue;
+                        _debugString = "Last Draw Pos: " + _lastDrawPos
+                        + "\nCurr Draw Pos: " + DrawPosition
+                        + "\nDistance: " + dir.magnitude
+                        + "\nDirection: " + dir;
 
-                        Color bg = cols[index];
-                        Color fg = BrushColor;
+                        PaintPixel(cols, new Vector2(i, j));
 
-                        Color r = new Color();
-                        r.a = 1 - (1 - fg.a) * (1 - bg.a);
                         
-                        if (r.a < 1.0e-6)
-                            continue; // Fully transparent -- R,G,B not important
-
-                        r.r = fg.r * fg.a / r.a + bg.r * bg.a * (1 - fg.a) / r.a;
-                        r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
-                        r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
-
-                        cols[index] = ToolToggle[0] ? Color.clear : r;
                     }
                 }
+
+                _lastDrawPos = DrawPosition;
+
                 Undo.RecordObject(DrawTexture, "edit canvas");
                 DrawTexture.SetPixels(cols);
                 DrawTexture.Apply();
             }
         }
+    }
+
+    void PaintPixel(Color[] pixels, Vector2 paintPos)
+    {
+        int index = (int)CanvasSize.x * (int)paintPos.y + (int)paintPos.x;
+        int arraySize = Mathf.RoundToInt(CanvasSize.x * CanvasSize.y);
+
+        if (index >= arraySize || index < 0)
+            return;
+
+        Color bg = pixels[index];
+        Color fg = BrushColor;
+
+        Color r = BlendColors(bg, fg);
+
+        pixels[index] = ToolToggle[0] ? Color.clear : r;
+    }
+
+    Color BlendColors(Color bg, Color fg)
+    {
+        Color r = new Color();
+        r.a = 1 - (1 - fg.a) * (1 - bg.a);
+                        
+        if (r.a < 1.0e-6)
+            return bg; // Fully transparent -- R,G,B not important
+
+        r.r = fg.r * fg.a / r.a + bg.r * bg.a * (1 - fg.a) / r.a;
+        r.g = fg.g * fg.a / r.a + bg.g * bg.a * (1 - fg.a) / r.a;
+        r.b = fg.b * fg.a / r.a + bg.b * bg.a * (1 - fg.a) / r.a;
+
+        return r;
     }
 
     void DrawCanvas()
@@ -288,8 +313,7 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        
-
+    
         var rect = new Rect(10, 20, 50, 50);
         BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
 
@@ -323,24 +347,6 @@ public class PixelCanvas : EditorWindow
         rect.height = 500;
 
         EditorGUI.LabelField(rect, _debugString);
-
-        // brushSizeRect.x += brushSizeRect.width;
-        // GUI.Label(brushSizeRect, BrushSize + "");
-
-        // brushSizeRect.x = 0;
-        // brushSizeRect.width = 25;
-        // brushSizeRect.y += brushSizeRect.height;
-        // IsErasing = GUI.Toggle(brushSizeRect, IsErasing, "");
-
-        // brushSizeRect.width = 80;
-        // brushSizeRect.y += brushSizeRect.height;
-        // if (GUI.Button(brushSizeRect, "" + CanvasZoom))
-        // {
-        //     CanvasZoom = 10f;
-        // }
-
-        // brushSizeRect.y += brushSizeRect.height;
-        // EditorGUI.LabelField(brushSizeRect, MenuOption + "");
     }
 
     void InitializeUI()
