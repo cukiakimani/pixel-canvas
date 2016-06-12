@@ -5,7 +5,6 @@ using System.IO;
 public class PixelCanvas : EditorWindow
 {
     public int MenuOption;
-    public GUISkin Skin;
 
     public static Texture2D DrawTexture;
     public Texture2D AlphaTexture;
@@ -24,11 +23,13 @@ public class PixelCanvas : EditorWindow
     // 0 - Eraser
     // 1 - Pen
     public bool[] ToolToggle = new bool[2];
-
-    string _debugString;
     
     private Texture2D _penIcon;
     private Texture2D _eraserIcon;
+    private bool[] _coloredPixels;
+    private Vector2 _lastDrawPos;
+
+    string _debugString;
 
     [MenuItem("Pixel Canvas/New Canvas")]
     public static void ShowWindow()
@@ -67,16 +68,16 @@ public class PixelCanvas : EditorWindow
     {
         // MenuOption = 0;
         CanvasSize = new Vector2(32, 32);
-
-        InitializeUI();
+        
         CreateBlankCanvas();
         MenuOption = 3;
 
-        Skin = Resources.Load<GUISkin>("PixelCanvasSkin");
-        
-
         ToolToggle = new bool[2];
         ToolToggle[1] = true;
+
+        InitializeUI();
+
+        _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
     }
 
     void Update()
@@ -147,7 +148,7 @@ public class PixelCanvas : EditorWindow
 
     void CreateBlankCanvas()
     {
-        AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
+        
         DrawTexture = new Texture2D((int)CanvasSize.x, (int)CanvasSize.y);
         DrawTexture.filterMode = FilterMode.Point;
         CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
@@ -160,6 +161,8 @@ public class PixelCanvas : EditorWindow
 
         DrawTexture.SetPixels(0, 0, (int)CanvasSize.x, (int)CanvasSize.y, cols);
         DrawTexture.Apply();
+
+        _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
     }
     
     void OpenSpriteCanvas()
@@ -168,13 +171,14 @@ public class PixelCanvas : EditorWindow
 
         if (path != "")
         {
-            AlphaTexture = Resources.Load<Texture2D>("alpha_spriteDeformer");
             var bytes = File.ReadAllBytes(path);
             DrawTexture = new Texture2D(1, 1);
             DrawTexture.LoadImage(bytes);
             CanvasSize = new Vector2(DrawTexture.width, DrawTexture.height);
             DrawTexture.filterMode = FilterMode.Point;
             CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+
+            _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
 
             MenuOption = 3;
         }
@@ -185,8 +189,6 @@ public class PixelCanvas : EditorWindow
 
         ToolToggle[1] = true;
     }
-
-    Vector2 _lastDrawPos;
 
     void PaintCanvas()
     {
@@ -236,14 +238,7 @@ public class PixelCanvas : EditorWindow
                 DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
 
                 PaintPixelBrushSize(DrawPosition);
-               
-                
-
                 Vector2 dir = (DrawPosition - _lastDrawPos);
-                _debugString = "Last Draw Pos: " + _lastDrawPos
-                + "\nCurr Draw Pos: " + DrawPosition
-                + "\nDistance: " + dir.magnitude
-                + "\nDirection: " + dir;
 
                 if (_lastDrawPos.x > 0 && _lastDrawPos.y > 0)
                 {
@@ -261,7 +256,13 @@ public class PixelCanvas : EditorWindow
         if (e.button == 0 && e.type == EventType.mouseUp)
         {
             _lastDrawPos = Vector2.one * -1;
+            for (int i = 0; i < _coloredPixels.Length; i++)
+            {
+                _coloredPixels[i] = false;
+            }
         }
+
+        _debugString = "" + _coloredPixels.Length;
     }
 
     void PaintPixelBrushSize(Vector2 pos)
@@ -301,7 +302,11 @@ public class PixelCanvas : EditorWindow
 
         Color r = BlendColors(bg, fg);
 
-        pixels[index] = ToolToggle[0] ? Color.clear : r;
+        if (!_coloredPixels[index])
+        {
+            pixels[index] = ToolToggle[0] ? Color.clear : r;
+            _coloredPixels[index] = true;
+        }
     }
 
     Color BlendColors(Color bg, Color fg)
@@ -366,6 +371,7 @@ public class PixelCanvas : EditorWindow
 
     void InitializeUI()
     {
+        AlphaTexture = Resources.Load<Texture2D>("transparency_background");
         _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
         _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
         _lastDrawPos = new Vector2(-1, -1);
