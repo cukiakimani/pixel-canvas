@@ -26,6 +26,9 @@ public class PixelCanvas : EditorWindow
     public bool[] ToolToggle = new bool[2];
 
     string _debugString;
+    
+    private Texture2D _penIcon;
+    private Texture2D _eraserIcon;
 
     [MenuItem("Pixel Canvas/New Canvas")]
     public static void ShowWindow()
@@ -65,7 +68,9 @@ public class PixelCanvas : EditorWindow
 
         CreateBlankCanvas();
         MenuOption = 3;
+
         Skin = Resources.Load<GUISkin>("PixelCanvasSkin");
+        
 
         ToolToggle = new bool[2];
         ToolToggle[1] = true;
@@ -292,7 +297,8 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        // GUI.skin = Skin;
+        _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
+        _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
 
         var rect = new Rect(10, 20, 50, 50);
         BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
@@ -301,11 +307,11 @@ public class PixelCanvas : EditorWindow
         rect.size = new Vector2(22, 22);
 
         // Pen 
-        ExclusiveGroupToggle(rect, 1, GUI.skin.toggle);
+        ExclusiveGroupToggle(rect, 1, _penIcon);
 
         // Eraser
         rect.x += 27;
-        ExclusiveGroupToggle(rect, 0, GUI.skin.toggle);
+        ExclusiveGroupToggle(rect, 0, _eraserIcon);
 
         rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
         BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, CanvasSize.x));
@@ -347,9 +353,9 @@ public class PixelCanvas : EditorWindow
         // EditorGUI.LabelField(brushSizeRect, MenuOption + "");
     }
 
-    void ExclusiveGroupToggle(Rect r, int index, GUIStyle style)
+    void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
     {
-        bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(""), style);
+        bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(icon), GUI.skin.button);
 
         if (!ToolToggle[index] && delta)
             ToolToggle[index] = delta;
