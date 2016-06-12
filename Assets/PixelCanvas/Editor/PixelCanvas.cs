@@ -35,6 +35,7 @@ public class PixelCanvas : EditorWindow
     {
         var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas), false, "Pixel Canvas");
         canvas.MenuOption = 1;
+        canvas.InitializeUI();
         canvas.Show();
     }
 
@@ -45,6 +46,7 @@ public class PixelCanvas : EditorWindow
         canvas.MenuOption = 0;
         canvas.Show();
         canvas.OpenSpriteCanvas();
+        canvas.InitializeUI();
     }
 
     [MenuItem("Pixel Canvas/Save Sprite")]
@@ -64,8 +66,9 @@ public class PixelCanvas : EditorWindow
     void OnEnable()
     {
         // MenuOption = 0;
-        CanvasSize = new Vector2(5, 10);
+        CanvasSize = new Vector2(32, 32);
 
+        InitializeUI();
         CreateBlankCanvas();
         MenuOption = 3;
 
@@ -154,18 +157,6 @@ public class PixelCanvas : EditorWindow
         {
             cols[i] = Color.clear;
         }
-
-        // Debug.Log("hello");
-
-        // for (int x = 0; x < (int)CanvasSize.x; x++)
-        // {
-        //     for (int y = 0; y < (int)CanvasSize.y; y++)
-        //     {
-        //         int index = (int)CanvasSize.y * y + x;
-        //         var v = new Vector2(x, y);
-        //         Debug.Log(index + " : " + v);
-        //     }
-        // }
 
         DrawTexture.SetPixels(0, 0, (int)CanvasSize.x, (int)CanvasSize.y, cols);
         DrawTexture.Apply();
@@ -297,8 +288,7 @@ public class PixelCanvas : EditorWindow
 
     void DrawUI()
     {
-        _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
-        _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
+        
 
         var rect = new Rect(10, 20, 50, 50);
         BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
@@ -353,6 +343,12 @@ public class PixelCanvas : EditorWindow
         // EditorGUI.LabelField(brushSizeRect, MenuOption + "");
     }
 
+    void InitializeUI()
+    {
+        _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
+        _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
+    }
+
     void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
     {
         bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(icon), GUI.skin.button);
@@ -363,7 +359,6 @@ public class PixelCanvas : EditorWindow
         if (ToolToggle[index])
             ToolToggleExclusivity(index);
     }
-
 
     void ToolToggleExclusivity(int trueIndex)
     {
