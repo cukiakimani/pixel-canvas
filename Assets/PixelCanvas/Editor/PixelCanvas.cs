@@ -209,7 +209,14 @@ string s = "bongo";
             CanvasRect.position += e.delta;
         }
 
-        if (e.type == EventType.scrollWheel)
+        if (e.command && e.type == EventType.scrollWheel)
+        {
+
+            var d = e.delta.y;
+            d = Mathf.Abs(d) > 0f ? -Mathf.Sign(d) * 1f : 0f;
+            BrushSize =(int)Mathf.Clamp(BrushSize + d, 1f, CanvasSize.x);
+        }
+        else if (e.type == EventType.scrollWheel)
         {
             CanvasZoom = Mathf.Clamp(CanvasZoom + -e.delta.y, 0.5f, 40f);
         }
@@ -336,6 +343,7 @@ string s = "bongo";
         CanvasRect.size = CanvasSize * CanvasZoom;
         GUI.DrawTextureWithTexCoords(CanvasRect, AlphaTexture, new Rect(0, 0, CanvasSize.x / 2, CanvasSize.y / 2));
         GUI.DrawTextureWithTexCoords(CanvasRect, DrawTexture, new Rect(0, 0, 1, 1));
+        CanvasBorder();
     }
 
     void DrawUI()
@@ -390,11 +398,25 @@ string s = "bongo";
         var size = BrushSize * CanvasZoom;
         var outlineSize = (BrushSize * CanvasZoom) * 0.03f;
         outlineSize = Mathf.Clamp(outlineSize, 1f, Mathf.Infinity);
-        
+
         EditorGUI.DrawRect(new Rect(pos.x, pos.y, size, outlineSize), color);
         EditorGUI.DrawRect(new Rect(pos.x, pos.y, outlineSize, size), color);
         EditorGUI.DrawRect(new Rect(pos.x + size - outlineSize, pos.y,  outlineSize, size), color);
         EditorGUI.DrawRect(new Rect(pos.x, pos.y + size - outlineSize,  size, outlineSize), color);
+    }
+
+    void CanvasBorder()
+    {
+        var pos = CanvasRect.position;
+        var size = CanvasSize * CanvasZoom;
+        var color = Color.black;
+        var outlineSize = size.magnitude * 0.002f;
+        outlineSize = Mathf.Clamp(outlineSize, 1f, Mathf.Infinity);
+
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y - outlineSize, size.x + outlineSize, outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x - outlineSize, pos.y - outlineSize, outlineSize, size.y + outlineSize * 2), color);
+        EditorGUI.DrawRect(new Rect(pos.x + size.x, pos.y,  outlineSize, size.y + outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size.y,  size.x + outlineSize, outlineSize), color);
     }
     void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
     {
