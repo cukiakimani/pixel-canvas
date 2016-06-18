@@ -35,15 +35,18 @@ public class PixelCanvas : EditorWindow
     public static void ShowWindow()
     {
         var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas), false, "Pixel Canvas");
+        PixelCanvas.DrawTexture = null;
         canvas.MenuOption = 1;
         canvas.InitializeUI();
         canvas.Show();
+        PixelCanvas.DrawTexture = null;
     }
 
     [MenuItem("Pixel Canvas/Edit Sprite")]
     public static void EditSpriteShowWindow()
     {
         var canvas = (PixelCanvas)EditorWindow.GetWindow(typeof(PixelCanvas), false, "Pixel Canvas");
+        PixelCanvas.DrawTexture = null;
         canvas.MenuOption = 0;
         canvas.Show();
         canvas.OpenSpriteCanvas();
@@ -66,18 +69,17 @@ public class PixelCanvas : EditorWindow
 
     void OnEnable()
     {
-        // MenuOption = 0;
-        CanvasSize = new Vector2(32, 32);
-        
-        CreateBlankCanvas();
-        MenuOption = 3;
+        MenuOption = 1;
 
         ToolToggle = new bool[2];
         ToolToggle[1] = true;
 
         InitializeUI();
 
-        _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
+        // MenuOption = 3;
+        // CanvasSize = new Vector2(32, 32);
+        // CreateBlankCanvas();
+        // coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
     }
 
     void Update()
@@ -98,7 +100,6 @@ public class PixelCanvas : EditorWindow
                 break;
 
             case 2:
-                NewWindowGUI();
                 OpenSpriteCanvas();
                 break;
 
@@ -128,15 +129,20 @@ public class PixelCanvas : EditorWindow
         }
     }
 
+string s = "bongo";
+
     void ChooseSizeCanvasGUI()
     {
-        Rect r = new Rect(5, 5, 200, 25);
+        Rect r = new Rect(10, 10, 200, 25);
+        // EditorGUI.DrawRect(r, Color.cyan);
+
         CanvasSize.x = Mathf.Clamp(EditorGUI.IntField(r, "Width", (int)CanvasSize.x), 0f, Mathf.Infinity);
 
-        r = new Rect(5, 35, 200, 25);
+        r.y += r.height + 5;
         CanvasSize.y = Mathf.Clamp(EditorGUI.IntField(r, "Height", (int)CanvasSize.y), 0f, Mathf.Infinity);
 
-        r = new Rect(5, 65, 100, 25);
+        r.y += r.height + 5;
+        r = new Rect(r.x, r.y, 100, 25);
         if (GUI.Button(r, "Create Canvas"))
         {
             CreateBlankCanvas();
@@ -151,7 +157,7 @@ public class PixelCanvas : EditorWindow
         
         DrawTexture = new Texture2D((int)CanvasSize.x, (int)CanvasSize.y);
         DrawTexture.filterMode = FilterMode.Point;
-        CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+        CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
 
         Color[] cols = DrawTexture.GetPixels();
         for (int i = 0; i < cols.Length; i++)
@@ -176,7 +182,7 @@ public class PixelCanvas : EditorWindow
             DrawTexture.LoadImage(bytes);
             CanvasSize = new Vector2(DrawTexture.width, DrawTexture.height);
             DrawTexture.filterMode = FilterMode.Point;
-            CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+            CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
 
             _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
 
@@ -184,7 +190,7 @@ public class PixelCanvas : EditorWindow
         }
         else
         {
-            MenuOption = 0;
+            MenuOption = 1;
         }
 
         ToolToggle[1] = true;
@@ -334,7 +340,8 @@ public class PixelCanvas : EditorWindow
     void DrawUI()
     {
     
-        var rect = new Rect(10, 20, 50, 50);
+        var rect = new Rect(10, 10, 50, 50);
+
         BrushColor = EditorGUI.ColorField(rect, new GUIContent(""), BrushColor, false, true, false, null);
 
         rect.y += rect.height + 5;
@@ -358,7 +365,7 @@ public class PixelCanvas : EditorWindow
         rect.y += rect.height + 5;
         if (GUI.Button(rect, "" + CanvasZoom))
         {
-            CanvasRect = new Rect(new Vector2(70, 20), CanvasSize * CanvasZoom);
+            CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
             CanvasZoom = 10f;
         }
 
