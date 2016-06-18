@@ -231,11 +231,12 @@ string s = "bongo";
 
             if (ToolToggle[0])
             {
-                GUI.Box(new Rect(pos, size), "");
+                PaintingCursor(pos, Color.white);
             }
             else
             {
                 EditorGUI.DrawRect(new Rect(pos, size), BrushColor);
+                // PaintingCursor(pos, Color.black);
             }
             
             if (e.button == 0 && (e.type == EventType.mouseDown || e.type == EventType.mouseDrag))
@@ -384,6 +385,17 @@ string s = "bongo";
         _lastDrawPos = new Vector2(-1, -1);
     }
 
+    void PaintingCursor(Vector3 pos, Color color)
+    {
+        var size = BrushSize * CanvasZoom;
+        var outlineSize = (BrushSize * CanvasZoom) * 0.03f;
+        outlineSize = Mathf.Clamp(outlineSize, 1f, Mathf.Infinity);
+        
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y, size, outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y, outlineSize, size), color);
+        EditorGUI.DrawRect(new Rect(pos.x + size - outlineSize, pos.y,  outlineSize, size), color);
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size - outlineSize,  size, outlineSize), color);
+    }
     void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
     {
         bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(icon), GUI.skin.button);
