@@ -22,6 +22,7 @@ public class PixelCanvas : EditorWindow
 
     // 0 - Eraser
     // 1 - Pen
+    // 2 - Eye Dropper
     public bool[] ToolToggle = new bool[3];
     
     private Texture2D _penIcon;
@@ -60,7 +61,9 @@ public class PixelCanvas : EditorWindow
     {
         byte[] bytes = DrawTexture.EncodeToPNG();
         string path = EditorUtility.SaveFilePanel("Save as PNG", Application.dataPath, "PixelCanvas_IMG.png", "");
-        File.WriteAllBytes(path, bytes);
+
+        if (path != "")
+            File.WriteAllBytes(path, bytes);
     }
 
     [MenuItem("Pixel Canvas/Save Sprite", true)]
