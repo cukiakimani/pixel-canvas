@@ -183,7 +183,7 @@ public class PixelCanvas : EditorWindow
             CanvasRect.position += e.delta;
         }
 
-        if (e.command && e.type == EventType.scrollWheel)
+        if (e.command && e.type == EventType.scrollWheel && !ToolToggle[2])
         {
 
             var d = e.delta.y;
@@ -226,10 +226,17 @@ public class PixelCanvas : EditorWindow
             }
             else if (ToolToggle[2]) // Eyedropper
             {
-                GUI.DrawTextureWithTexCoords(new Rect(pos.x, pos.y, CanvasZoom, CanvasZoom), _eyeDropperIcon, new Rect(0, 0, 1, 1));
-
+                cursorOffset = Vector2.one * CanvasZoom * 0.5f;
+                pos = new Vector2(e.mousePosition.x, e.mousePosition.y) - cursorOffset;
+                cSnap = SnapVector(CanvasRect.position, CanvasZoom);
+                delta = CanvasRect.position - cSnap;
                 pos = SnapVector(pos, CanvasZoom) + delta;
-                PaintingCursor(pos, Color.white);
+                
+                var s = CanvasZoom * 0.75f;
+                var p = pos + Vector2.right * CanvasZoom * 0.25f;
+
+                GUI.DrawTextureWithTexCoords(new Rect(p.x, p.y, s, s), _eyeDropperIcon, new Rect(0, 0, 1, 1));
+                
                 if (e.button == 0 && e.type == EventType.mouseDown)
                 {
                     var cols = DrawTexture.GetPixels();
@@ -405,10 +412,11 @@ public class PixelCanvas : EditorWindow
         _lastDrawPos = new Vector2(-1, -1);
     }
 
-    void PaintingCursor(Vector2 pos, Color color)
+    void PaintingCursor(Vector2 pos, Color color, bool withBrushSize = true)
     {
-        var size = BrushSize * CanvasZoom;
-        var outlineSize = (BrushSize * CanvasZoom) * 0.03f;
+        var b = withBrushSize ? BrushSize : 1f;
+        var size = b * CanvasZoom;
+        var outlineSize = (b * CanvasZoom) * 0.03f;
         outlineSize = Mathf.Clamp(outlineSize, 1f, Mathf.Infinity);
 
         EditorGUI.DrawRect(new Rect(pos.x, pos.y, size, outlineSize), color);
@@ -417,7 +425,7 @@ public class PixelCanvas : EditorWindow
         EditorGUI.DrawRect(new Rect(pos.x, pos.y + size - outlineSize, size, outlineSize), color);
 
         var s = CanvasZoom;
-        pos += Vector2.one * 0.5f * CanvasZoom * BrushSize;
+        pos += Vector2.one * 0.5f * CanvasZoom * b;
         pos -= Vector2.one * 0.5f * s;
         GUI.DrawTextureWithTexCoords(new Rect(pos.x, pos.y, s, s), _penCursor, new Rect(0, 0, 1, 1));
     }
