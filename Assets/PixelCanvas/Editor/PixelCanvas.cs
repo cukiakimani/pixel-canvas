@@ -22,10 +22,12 @@ public class PixelCanvas : EditorWindow
 
     // 0 - Eraser
     // 1 - Pen
-    public bool[] ToolToggle = new bool[2];
+    public bool[] ToolToggle = new bool[3];
     
     private Texture2D _penIcon;
     private Texture2D _eraserIcon;
+    private Texture2D _eyeDropperIcon;
+    private Texture2D _penCursor;
     private bool[] _coloredPixels;
     private Vector2 _lastDrawPos;
 
@@ -71,15 +73,15 @@ public class PixelCanvas : EditorWindow
     {
         MenuOption = 1;
 
-        ToolToggle = new bool[2];
-        ToolToggle[1] = true;
-
-        InitializeUI();
-
         // MenuOption = 3;
         // CanvasSize = new Vector2(32, 32);
         // CreateBlankCanvas();
-        // coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
+        // _coloredPixels = new bool[DrawTexture.width * DrawTexture.height];
+
+        ToolToggle = new bool[3];
+        ToolToggle[1] = true;
+
+        InitializeUI();
     }
 
     void Update()
@@ -91,10 +93,6 @@ public class PixelCanvas : EditorWindow
     {
         switch (MenuOption)
         {
-            case 0:
-                NewWindowGUI();
-                break;
-
             case 1:
                 ChooseSizeCanvasGUI();
                 break;
@@ -109,33 +107,9 @@ public class PixelCanvas : EditorWindow
         }
     }
 
-    void NewWindowGUI()
-    {
-        var rect = new Rect(0, 0, 100, 20);
-        EditorGUI.DrawRect(rect, Color.gray);
-
-        GUI.Label(rect, "Pixel Canvas!");
-
-        rect.y += rect.height;
-        if (GUI.Button(rect, "Blank Canvas"))
-        {
-            MenuOption = 1;
-        }
-
-        rect.y += rect.height;
-        if (GUI.Button(rect, "Edit Sprite"))
-        {
-            MenuOption = 2;
-        }
-    }
-
-string s = "bongo";
-
     void ChooseSizeCanvasGUI()
     {
         Rect r = new Rect(10, 10, 200, 25);
-        // EditorGUI.DrawRect(r, Color.cyan);
-
         CanvasSize.x = Mathf.Clamp(EditorGUI.IntField(r, "Width", (int)CanvasSize.x), 0f, Mathf.Infinity);
 
         r.y += r.height + 5;
@@ -214,7 +188,7 @@ string s = "bongo";
 
             var d = e.delta.y;
             d = Mathf.Abs(d) > 0f ? -Mathf.Sign(d) * 1f : 0f;
-            BrushSize =(int)Mathf.Clamp(BrushSize + d, 1f, CanvasSize.x);
+            BrushSize = (int)Mathf.Clamp(BrushSize + d, 1f, CanvasSize.x);
         }
         else if (e.type == EventType.scrollWheel)
         {
@@ -236,34 +210,44 @@ string s = "bongo";
             pos = SnapVector(pos, CanvasZoom) + delta;
             Vector2 size = Vector2.one * BrushSize * CanvasZoom;
 
-            if (ToolToggle[0])
+            if (ToolToggle[0]) // Eraser
             {
+                var col = (e.type == EventType.mouseDown || e.type == EventType.mouseDrag) ? Color.black : Color.white; 
                 PaintingCursor(pos, Color.white);
+                
+                
+                EditCanvas(e, pos);
             }
-            else
+            else if (ToolToggle[1]) // Pen
             {
+                EditCanvas(e, pos);
                 EditorGUI.DrawRect(new Rect(pos, size), BrushColor);
-                // PaintingCursor(pos, Color.black);
+                PaintingCursor(pos, BrushColor);
             }
-            
-            if (e.button == 0 && (e.type == EventType.mouseDown || e.type == EventType.mouseDrag))
+            else if (ToolToggle[2]) // Eyedropper
             {
-                pos -= CanvasRect.position;
-                DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
+                GUI.DrawTextureWithTexCoords(new Rect(pos.x, pos.y, CanvasZoom, CanvasZoom), _eyeDropperIcon, new Rect(0, 0, 1, 1));
 
-                PaintPixelBrushSize(DrawPosition);
-                Vector2 dir = (DrawPosition - _lastDrawPos);
-
-                if (_lastDrawPos.x > 0 && _lastDrawPos.y > 0)
+                pos = SnapVector(pos, CanvasZoom) + delta;
+                PaintingCursor(pos, Color.white);
+                if (e.button == 0 && e.type == EventType.mouseDown)
                 {
-                    for (int d = 1; d < dir.magnitude; d++)
-                    {
-                        var p = _lastDrawPos + dir.normalized * d;
-                        PaintPixelBrushSize(p);
-                    }
-                }
+                    var cols = DrawTexture.GetPixels();
+                    pos -= CanvasRect.position;
+                    pos = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
 
-                _lastDrawPos = DrawPosition;
+                    int x = (int)pos.x;
+                    int y = (int)CanvasSize.y - 1 - (int)pos.y;
+        
+                    int index = (int)CanvasSize.x * y + x;
+                    int arraySize = Mathf.RoundToInt(CanvasSize.x * CanvasSize.y);
+
+                    if (index <= arraySize && index > 0)
+                    {
+                        BrushColor = cols[index];
+                    }
+
+                }
             }
         }
 
@@ -275,8 +259,29 @@ string s = "bongo";
                 _coloredPixels[i] = false;
             }
         }
+    }
 
-        _debugString = "" + _coloredPixels.Length;
+    void EditCanvas(Event e, Vector2 pos)
+    {
+        if (e.button == 0 && (e.type == EventType.mouseDown || e.type == EventType.mouseDrag))
+        {
+            pos -= CanvasRect.position;
+            DrawPosition = new Vector2(pos.x / CanvasZoom, pos.y / CanvasZoom);
+
+            PaintPixelBrushSize(DrawPosition);
+            Vector2 dir = (DrawPosition - _lastDrawPos);
+
+            if (_lastDrawPos.x > 0 && _lastDrawPos.y > 0)
+            {
+                for (int d = 1; d < dir.magnitude; d++)
+                {
+                    var p = _lastDrawPos + dir.normalized * d;
+                    PaintPixelBrushSize(p);
+                }
+            }
+
+            _lastDrawPos = DrawPosition;
+        }
     }
 
     void PaintPixelBrushSize(Vector2 pos)
@@ -356,12 +361,24 @@ string s = "bongo";
         rect.y += rect.height + 5;
         rect.size = new Vector2(22, 22);
 
-        // Pen 
+        // Pen
         ExclusiveGroupToggle(rect, 1, _penIcon);
 
         // Eraser
         rect.x += 27;
         ExclusiveGroupToggle(rect, 0, _eraserIcon);
+
+        // Eye Dropper
+        rect.x -= 27;
+        rect.y += rect.height + 5;
+        ExclusiveGroupToggle(rect, 2, _eyeDropperIcon);
+
+        rect.x += 27;
+        if (GUI.Button(rect, "" + CanvasZoom))
+        {
+            CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
+            CanvasZoom = 10f;
+        }
 
         rect = new Rect(10, rect.y + rect.height + 5, 50, 22);
         BrushSize = Mathf.RoundToInt(GUI.HorizontalSlider(rect, BrushSize, 1f, CanvasSize.x));
@@ -371,18 +388,11 @@ string s = "bongo";
         style.alignment = TextAnchor.UpperRight;
         EditorGUI.LabelField(rect, "" + BrushSize, style);
 
-        rect.y += rect.height + 5;
-        if (GUI.Button(rect, "" + CanvasZoom))
-        {
-            CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
-            CanvasZoom = 10f;
-        }
+        // rect.y += rect.height + 10;
+        // rect.width = 300;
+        // rect.height = 500;
 
-        rect.y += rect.height + 10;
-        rect.width = 300;
-        rect.height = 500;
-
-        EditorGUI.LabelField(rect, _debugString);
+        // EditorGUI.LabelField(rect, _debugString);
     }
 
     void InitializeUI()
@@ -390,10 +400,12 @@ string s = "bongo";
         AlphaTexture = Resources.Load<Texture2D>("transparency_background");
         _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
         _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
+        _eyeDropperIcon = Resources.Load<Texture2D>("Icons/EyeDropperIcon");
+        _penCursor = Resources.Load<Texture2D>("cursor");
         _lastDrawPos = new Vector2(-1, -1);
     }
 
-    void PaintingCursor(Vector3 pos, Color color)
+    void PaintingCursor(Vector2 pos, Color color)
     {
         var size = BrushSize * CanvasZoom;
         var outlineSize = (BrushSize * CanvasZoom) * 0.03f;
@@ -401,8 +413,13 @@ string s = "bongo";
 
         EditorGUI.DrawRect(new Rect(pos.x, pos.y, size, outlineSize), color);
         EditorGUI.DrawRect(new Rect(pos.x, pos.y, outlineSize, size), color);
-        EditorGUI.DrawRect(new Rect(pos.x + size - outlineSize, pos.y,  outlineSize, size), color);
-        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size - outlineSize,  size, outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x + size - outlineSize, pos.y, outlineSize, size), color);
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size - outlineSize, size, outlineSize), color);
+
+        var s = CanvasZoom;
+        pos += Vector2.one * 0.5f * CanvasZoom * BrushSize;
+        pos -= Vector2.one * 0.5f * s;
+        GUI.DrawTextureWithTexCoords(new Rect(pos.x, pos.y, s, s), _penCursor, new Rect(0, 0, 1, 1));
     }
 
     void CanvasBorder()
@@ -415,9 +432,10 @@ string s = "bongo";
 
         EditorGUI.DrawRect(new Rect(pos.x, pos.y - outlineSize, size.x + outlineSize, outlineSize), color);
         EditorGUI.DrawRect(new Rect(pos.x - outlineSize, pos.y - outlineSize, outlineSize, size.y + outlineSize * 2), color);
-        EditorGUI.DrawRect(new Rect(pos.x + size.x, pos.y,  outlineSize, size.y + outlineSize), color);
-        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size.y,  size.x + outlineSize, outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x + size.x, pos.y, outlineSize, size.y + outlineSize), color);
+        EditorGUI.DrawRect(new Rect(pos.x, pos.y + size.y, size.x + outlineSize, outlineSize), color);
     }
+
     void ExclusiveGroupToggle(Rect r, int index, Texture2D icon)
     {
         bool delta = GUI.Toggle(r, ToolToggle[index], new GUIContent(icon), GUI.skin.button);
