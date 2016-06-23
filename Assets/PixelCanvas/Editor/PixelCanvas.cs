@@ -28,6 +28,8 @@ public class PixelCanvas : EditorWindow
     private Texture2D _penIcon;
     private Texture2D _eraserIcon;
     private Texture2D _eyeDropperIcon;
+    private Texture2D _eyeDropperCanvasIcon;
+    private Texture2D _centerCanvasIcon;
     private Texture2D _penCursor;
     private bool[] _coloredPixels;
     private Vector2 _lastDrawPos;
@@ -238,7 +240,7 @@ public class PixelCanvas : EditorWindow
                 var s = CanvasZoom * 0.75f;
                 var p = pos + Vector2.right * CanvasZoom * 0.25f;
 
-                GUI.DrawTextureWithTexCoords(new Rect(p.x, p.y, s, s), _eyeDropperIcon, new Rect(0, 0, 1, 1));
+                GUI.DrawTextureWithTexCoords(new Rect(p.x, p.y, s, s), _eyeDropperCanvasIcon, new Rect(0, 0, 1, 1));
                 
                 if (e.button == 0 && e.type == EventType.mouseDown)
                 {
@@ -384,7 +386,7 @@ public class PixelCanvas : EditorWindow
         ExclusiveGroupToggle(rect, 2, _eyeDropperIcon);
 
         rect.x += 27;
-        if (GUI.Button(rect, "" + CanvasZoom))
+        if (GUI.Button(rect, new GUIContent(_centerCanvasIcon)))
         {
             CanvasRect = new Rect(new Vector2(70, 10), CanvasSize * CanvasZoom);
             CanvasZoom = 10f;
@@ -411,6 +413,8 @@ public class PixelCanvas : EditorWindow
         _penIcon = Resources.Load<Texture2D>("Icons/PenIcon");
         _eraserIcon = Resources.Load<Texture2D>("Icons/EraserIcon");
         _eyeDropperIcon = Resources.Load<Texture2D>("Icons/EyeDropperIcon");
+        _eyeDropperCanvasIcon = Resources.Load<Texture2D>("Icons/EyeDropperCanvasIcon");
+        _centerCanvasIcon = Resources.Load<Texture2D>("Icons/CenterCanvasIcon");
         _penCursor = Resources.Load<Texture2D>("cursor");
         _lastDrawPos = new Vector2(-1, -1);
     }
