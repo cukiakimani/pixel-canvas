@@ -415,7 +415,7 @@ public class PixelCanvas : EditorWindow
         _eyeDropperIcon = Resources.Load<Texture2D>("Icons/EyeDropperIcon");
         _eyeDropperCanvasIcon = Resources.Load<Texture2D>("Icons/EyeDropperCanvasIcon");
         _centerCanvasIcon = Resources.Load<Texture2D>("Icons/CenterCanvasIcon");
-        _penCursor = Resources.Load<Texture2D>("cursor");
+        _penCursor = Resources.Load<Texture2D>("Icons/CursorIcon");
         _lastDrawPos = new Vector2(-1, -1);
     }
 
